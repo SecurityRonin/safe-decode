@@ -2,6 +2,40 @@
 name = "safe-decode"
 version = "0.1.0"
 edition = "2021"
+# Low MSRV: a leaf transform crate with no features to gate. A deliberate, CI-verified
+# floor so every fleet parser can depend on it without raising theirs.
 rust-version = "1.75"
+license = "Apache-2.0"
+description = "Panic-free, allocating byte-to-value transforms with no format knowledge — ROT13, the UTF-16 decoder family with its NUL policy named in each function, and hex rendering."
+repository = "https://github.com/SecurityRonin/safe-decode"
+homepage = "https://github.com/SecurityRonin/safe-decode"
+documentation = "https://docs.rs/safe-decode"
+readme = "README.md"
+authors = ["Albert Hui <albert.hui@gmail.com>"]
+keywords = ["forensics", "utf16", "decoding", "rot13", "no-panic"]
+categories = ["encoding", "parsing", "text-processing", "no-std"]
+exclude = ["fuzz/", ".github/", "docs/", "mkdocs.yml", "deny.toml", "renovate.json", ".pre-commit-config.yaml", "release-plz.toml"]
 
 [dependencies]
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+correctness = "deny"
+suspicious = "deny"
+module_name_repetitions = { level = "allow", priority = 1 }
+must_use_candidate = { level = "allow", priority = 1 }
+missing_errors_doc = { level = "allow", priority = 1 }
+missing_panics_doc = { level = "allow", priority = 1 }
+cast_possible_truncation = { level = "allow", priority = 1 }
+cast_possible_wrap = { level = "allow", priority = 1 }
+cast_sign_loss = { level = "allow", priority = 1 }
+cast_precision_loss = { level = "allow", priority = 1 }
+# This crate transforms attacker-controllable bytes: a panic is a denial of service on an
+# examiner's evidence, so the panicking constructs are denied outright in production code.
+unwrap_used = { level = "deny", priority = 0 }
+expect_used = { level = "deny", priority = 0 }
+indexing_slicing = { level = "deny", priority = 0 }

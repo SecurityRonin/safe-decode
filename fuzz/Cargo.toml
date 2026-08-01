@@ -1,0 +1,91 @@
+[package]
+name = "safe-decode-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.safe-decode]
+path = ".."
+
+[[bin]]
+name = "decode_utf16be_keep_nuls"
+path = "fuzz_targets/decode_utf16be_keep_nuls.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "decode_utf16be_trim_end_nuls"
+path = "fuzz_targets/decode_utf16be_trim_end_nuls.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "decode_utf16be_until_nul"
+path = "fuzz_targets/decode_utf16be_until_nul.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "decode_utf16le_keep_nuls"
+path = "fuzz_targets/decode_utf16le_keep_nuls.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "decode_utf16le_trim_end_nuls"
+path = "fuzz_targets/decode_utf16le_trim_end_nuls.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "decode_utf16le_until_nul"
+path = "fuzz_targets/decode_utf16le_until_nul.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "rot13"
+path = "fuzz_targets/rot13.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "split_utf16be_on_nul"
+path = "fuzz_targets/split_utf16be_on_nul.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "split_utf16le_on_nul"
+path = "fuzz_targets/split_utf16le_on_nul.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "to_hex_lower"
+path = "fuzz_targets/to_hex_lower.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "to_hex_upper"
+path = "fuzz_targets/to_hex_upper.rs"
+test = false
+doc = false
+bench = false

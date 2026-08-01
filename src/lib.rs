@@ -1,6 +1,9 @@
 #![no_std]
 #![forbid(unsafe_code)]
-#![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used))]
+#![cfg_attr(
+    test,
+    allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)
+)]
 
 //! Panic-free, allocating byte→value transforms with no format knowledge.
 //!

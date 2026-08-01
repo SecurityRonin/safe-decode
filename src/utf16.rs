@@ -57,12 +57,11 @@ fn decode(units: &[u16], dangling_byte: bool) -> DecodedUtf16 {
     let mut text = String::with_capacity(units.len());
     let mut unpaired_surrogates = 0;
     for unit in core::char::decode_utf16(units.iter().copied()) {
-        match unit {
-            Ok(ch) => text.push(ch),
-            Err(_) => {
-                text.push(char::REPLACEMENT_CHARACTER);
-                unpaired_surrogates += 1;
-            }
+        if let Ok(ch) = unit {
+            text.push(ch);
+        } else {
+            text.push(char::REPLACEMENT_CHARACTER);
+            unpaired_surrogates += 1;
         }
     }
     DecodedUtf16 {

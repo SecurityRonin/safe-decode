@@ -1,0 +1,6 @@
+[toolchain]
+# Dev/CI toolchain pinned to current stable (fleet policy). The crate's declared MSRV
+# (Cargo.toml `rust-version = "1.75"`) is a separate, deliberately low floor, verified by
+# its own CI job so no consumer's minimum is raised.
+channel = "1.96.0"
+components = ["rustfmt", "clippy"]
