@@ -31,8 +31,9 @@
 //! assert_eq!(decode_utf16le_keep_nuls(bytes).text, "A\0B\0");
 //! assert_eq!(decode_utf16le_until_nul(bytes).text, "A");
 //! assert_eq!(decode_utf16le_trim_end_nuls(bytes).text, "A\0B");
-//! let parts: Vec<&str> = split_utf16le_on_nul(bytes).iter().map(|d| d.text.as_str()).collect();
-//! assert_eq!(parts, ["A", "B", ""]);
+//! let parts = split_utf16le_on_nul(bytes);
+//! let texts: Vec<&str> = parts.iter().map(|d| d.text.as_str()).collect();
+//! assert_eq!(texts, ["A", "B", ""]);
 //! ```
 //!
 //! Each decode returns a [`DecodedUtf16`], which carries whether information was lost and

@@ -10,7 +10,7 @@ use alloc::string::String;
 /// ```
 #[must_use]
 pub fn to_hex_lower(bytes: &[u8]) -> String {
-    unimplemented!("RED: to_hex_lower")
+    render(bytes, b'a')
 }
 
 /// Render `bytes` as uppercase hex, two characters per byte, no separator.
@@ -21,7 +21,26 @@ pub fn to_hex_lower(bytes: &[u8]) -> String {
 /// ```
 #[must_use]
 pub fn to_hex_upper(bytes: &[u8]) -> String {
-    unimplemented!("RED: to_hex_upper")
+    render(bytes, b'A')
+}
+
+/// Render each byte as two hex digits, `ten` being the letter that stands for 0xA.
+fn render(bytes: &[u8], ten: u8) -> String {
+    let mut out = String::with_capacity(bytes.len().saturating_mul(2));
+    for &b in bytes {
+        out.push(digit(b >> 4, ten));
+        out.push(digit(b & 0x0F, ten));
+    }
+    out
+}
+
+/// One hex digit for the low nibble of `n`. Masking keeps the arithmetic in range, so no
+/// input can index or overflow out of the digit set.
+fn digit(n: u8, ten: u8) -> char {
+    match n & 0x0F {
+        d @ 0..=9 => char::from(b'0' + d),
+        d => char::from(ten + (d - 10)),
+    }
 }
 
 #[cfg(test)]

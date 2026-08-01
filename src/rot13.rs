@@ -14,7 +14,22 @@ use alloc::string::String;
 /// ```
 #[must_use]
 pub fn rot13(s: &str) -> String {
-    unimplemented!("RED: rot13")
+    s.chars()
+        .map(|c| match c {
+            'A'..='Z' => rotate(c, b'A'),
+            'a'..='z' => rotate(c, b'a'),
+            other => other,
+        })
+        .collect()
+}
+
+/// Rotate one ASCII letter thirteen places within the 26-letter run starting at `base`.
+///
+/// Only reachable from the two matched ASCII ranges above, so `c as u8` is exact and the
+/// arithmetic stays inside the run.
+fn rotate(c: char, base: u8) -> char {
+    let offset = (c as u8).wrapping_sub(base);
+    char::from(base + (offset + 13) % 26)
 }
 
 #[cfg(test)]

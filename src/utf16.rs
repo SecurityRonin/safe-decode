@@ -31,8 +31,83 @@ impl DecodedUtf16 {
     /// Whether anything was lost: an unpaired surrogate, a dangling byte, or both.
     #[must_use]
     pub fn is_lossy(&self) -> bool {
-        unimplemented!("RED: DecodedUtf16::is_lossy")
+        self.dangling_byte || self.unpaired_surrogates > 0
     }
+}
+
+/// Split `bytes` into UTF-16 code units, dropping an odd trailing byte. `to_unit` is the
+/// endianness: `u16::from_le_bytes` or `u16::from_be_bytes`.
+fn units(bytes: &[u8], to_unit: fn([u8; 2]) -> u16) -> Vec<u16> {
+    bytes
+        .chunks_exact(2)
+        // `chunks_exact(2)` yields nothing but 2-byte chunks, so this always converts.
+        .filter_map(|chunk| <[u8; 2]>::try_from(chunk).ok())
+        .map(to_unit)
+        .collect()
+}
+
+/// Whether `bytes` has an odd length, leaving a byte that cannot form a code unit.
+fn has_dangling_byte(bytes: &[u8]) -> bool {
+    bytes.len() % 2 == 1
+}
+
+/// Decode code units to text, replacing each unpaired surrogate half with U+FFFD and
+/// counting how many were replaced.
+fn decode(units: &[u16], dangling_byte: bool) -> DecodedUtf16 {
+    let mut text = String::with_capacity(units.len());
+    let mut unpaired_surrogates = 0;
+    for unit in core::char::decode_utf16(units.iter().copied()) {
+        match unit {
+            Ok(ch) => text.push(ch),
+            Err(_) => {
+                text.push(char::REPLACEMENT_CHARACTER);
+                unpaired_surrogates += 1;
+            }
+        }
+    }
+    DecodedUtf16 {
+        text,
+        unpaired_surrogates,
+        dangling_byte,
+    }
+}
+
+fn keep_nuls(bytes: &[u8], to_unit: fn([u8; 2]) -> u16) -> DecodedUtf16 {
+    decode(&units(bytes, to_unit), has_dangling_byte(bytes))
+}
+
+fn until_nul(bytes: &[u8], to_unit: fn([u8; 2]) -> u16) -> DecodedUtf16 {
+    let mut units = units(bytes, to_unit);
+    if let Some(nul) = units.iter().position(|&u| u == 0) {
+        units.truncate(nul);
+    }
+    decode(&units, has_dangling_byte(bytes))
+}
+
+fn trim_end_nuls(bytes: &[u8], to_unit: fn([u8; 2]) -> u16) -> DecodedUtf16 {
+    let mut units = units(bytes, to_unit);
+    let end = units
+        .iter()
+        .rposition(|&u| u != 0)
+        .map_or(0, |last| last + 1);
+    units.truncate(end);
+    decode(&units, has_dangling_byte(bytes))
+}
+
+fn split_on_nul(bytes: &[u8], to_unit: fn([u8; 2]) -> u16) -> Vec<DecodedUtf16> {
+    let units = units(bytes, to_unit);
+    let mut segments: Vec<DecodedUtf16> = units
+        .split(|&u| u == 0)
+        .map(|segment| decode(segment, false))
+        .collect();
+    // `slice::split` always yields at least one segment, so the dangling byte — which sits
+    // at the very end of the input — always has a segment to be attributed to.
+    if has_dangling_byte(bytes) {
+        if let Some(last) = segments.last_mut() {
+            last.dangling_byte = true;
+        }
+    }
+    segments
 }
 
 /// Decode the whole slice as UTF-16LE, keeping NUL code units as U+0000 characters.
@@ -41,7 +116,7 @@ impl DecodedUtf16 {
 /// the bytes are exactly the string.
 #[must_use]
 pub fn decode_utf16le_keep_nuls(bytes: &[u8]) -> DecodedUtf16 {
-    unimplemented!("RED: decode_utf16le_keep_nuls")
+    keep_nuls(bytes, u16::from_le_bytes)
 }
 
 /// Decode UTF-16LE up to the first NUL code unit, which terminates the string.
@@ -50,7 +125,7 @@ pub fn decode_utf16le_keep_nuls(bytes: &[u8]) -> DecodedUtf16 {
 /// for a NUL-terminated field inside a larger buffer.
 #[must_use]
 pub fn decode_utf16le_until_nul(bytes: &[u8]) -> DecodedUtf16 {
-    unimplemented!("RED: decode_utf16le_until_nul")
+    until_nul(bytes, u16::from_le_bytes)
 }
 
 /// Decode the whole slice as UTF-16LE, then strip NUL code units from the end only.
@@ -58,7 +133,7 @@ pub fn decode_utf16le_until_nul(bytes: &[u8]) -> DecodedUtf16 {
 /// Interior NULs are kept as U+0000. Use this for a fixed-width, NUL-padded field.
 #[must_use]
 pub fn decode_utf16le_trim_end_nuls(bytes: &[u8]) -> DecodedUtf16 {
-    unimplemented!("RED: decode_utf16le_trim_end_nuls")
+    trim_end_nuls(bytes, u16::from_le_bytes)
 }
 
 /// Split a UTF-16LE slice on NUL code units and decode every segment.
@@ -70,7 +145,7 @@ pub fn decode_utf16le_trim_end_nuls(bytes: &[u8]) -> DecodedUtf16 {
 /// convention lives.
 #[must_use]
 pub fn split_utf16le_on_nul(bytes: &[u8]) -> Vec<DecodedUtf16> {
-    unimplemented!("RED: split_utf16le_on_nul")
+    split_on_nul(bytes, u16::from_le_bytes)
 }
 
 /// Decode the whole slice as UTF-16BE, keeping NUL code units as U+0000 characters.
@@ -78,7 +153,7 @@ pub fn split_utf16le_on_nul(bytes: &[u8]) -> Vec<DecodedUtf16> {
 /// The big-endian twin of [`decode_utf16le_keep_nuls`].
 #[must_use]
 pub fn decode_utf16be_keep_nuls(bytes: &[u8]) -> DecodedUtf16 {
-    unimplemented!("RED: decode_utf16be_keep_nuls")
+    keep_nuls(bytes, u16::from_be_bytes)
 }
 
 /// Decode UTF-16BE up to the first NUL code unit, which terminates the string.
@@ -86,7 +161,7 @@ pub fn decode_utf16be_keep_nuls(bytes: &[u8]) -> DecodedUtf16 {
 /// The big-endian twin of [`decode_utf16le_until_nul`].
 #[must_use]
 pub fn decode_utf16be_until_nul(bytes: &[u8]) -> DecodedUtf16 {
-    unimplemented!("RED: decode_utf16be_until_nul")
+    until_nul(bytes, u16::from_be_bytes)
 }
 
 /// Decode the whole slice as UTF-16BE, then strip NUL code units from the end only.
@@ -94,7 +169,7 @@ pub fn decode_utf16be_until_nul(bytes: &[u8]) -> DecodedUtf16 {
 /// The big-endian twin of [`decode_utf16le_trim_end_nuls`].
 #[must_use]
 pub fn decode_utf16be_trim_end_nuls(bytes: &[u8]) -> DecodedUtf16 {
-    unimplemented!("RED: decode_utf16be_trim_end_nuls")
+    trim_end_nuls(bytes, u16::from_be_bytes)
 }
 
 /// Split a UTF-16BE slice on NUL code units and decode every segment.
@@ -102,7 +177,7 @@ pub fn decode_utf16be_trim_end_nuls(bytes: &[u8]) -> DecodedUtf16 {
 /// The big-endian twin of [`split_utf16le_on_nul`].
 #[must_use]
 pub fn split_utf16be_on_nul(bytes: &[u8]) -> Vec<DecodedUtf16> {
-    unimplemented!("RED: split_utf16be_on_nul")
+    split_on_nul(bytes, u16::from_be_bytes)
 }
 
 #[cfg(test)]
