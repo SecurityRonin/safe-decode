@@ -60,7 +60,7 @@ jobs:
       # error arm of a conversion that `chunks_exact(2)` guarantees, and the empty
       # arm of a `slice::split` that always yields a segment — so the region figure
       # sits just under 100 and lines/functions are the meaningful invariants.
-      - run: cargo llvm-cov --lib --fail-under-lines 100 --fail-under-functions 100 --show-missing-lines
+      - run: cargo llvm-cov --fail-under-lines 100 --fail-under-functions 100 --show-missing-lines --ignore-filename-regex '(^|/)src/(main\.rs|bin/)'
 
   msrv:
     name: MSRV (1.75)
