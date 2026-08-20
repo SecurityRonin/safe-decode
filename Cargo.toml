@@ -1,6 +1,6 @@
 [package]
 name = "safe-decode"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 # Low MSRV: a leaf transform crate with no features to gate. A deliberate, CI-verified
 # floor so every fleet parser can depend on it without raising theirs.
